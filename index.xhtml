@@ -39,6 +39,6 @@
   <dialog id="permissionDialog" aria-labelledby="permissionTitle"><div class="dialog-body"><h2 id="permissionTitle">选择一个文件夹开始</h2><p>接下来浏览器会请求读写权限，允许后才能扫描和清理。</p><ul class="permission-list"><li>只处理你选择的文件夹</li><li>文件不上传，关闭页面后不再保留授权</li><li>删除前仍会要求输入文件名</li></ul><div class="dialog-actions"><button class="button" id="cancelPermission">取消</button><button class="primary" id="permissionContinue">继续选择文件夹</button></div></div></dialog>
   <dialog id="deleteDialog" aria-labelledby="deleteTitle"><div class="dialog-body"><h2 id="deleteTitle">永久删除此项？</h2><p class="warning-text">删除后无法恢复，也不会进入废纸篓。</p><div class="confirm-file"><div class="confirm-name" id="deleteName"></div><div id="deletePath"></div><div id="deleteSize"></div></div><p id="deleteImpact"></p><label for="deleteConfirm">输入完整名称以确认</label><input class="confirm-input" id="deleteConfirm" autocomplete="off" /><div class="dialog-actions"><button class="button" id="cancelDelete">取消</button><button class="danger-button" id="confirmDelete" disabled="disabled">永久删除</button></div></div></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script type="module" src="./src/main.js"></script>
+  <script>import('./src/main.js');</script>
 </body>
 </html>
