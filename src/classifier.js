@@ -4,7 +4,7 @@ const extension = (name) => { const index = name.lastIndexOf('.'); return index 
 
 export function appForPath(filePath) {
   const lower = filePath.toLowerCase();
-  const bundle = filePath.match(/\/([^/]+)\.app(?:\/|$)/i);
+  const bundle = filePath.match(/(?:^|\/)([^/]+)\.app(?:\/|$)/i);
   if (bundle) return bundle[1];
   const known = [
     [['qqmusic', 'irrcache'], 'QQ 音乐'], [['wechat', 'weixin', 'xwechat'], '微信'],
@@ -46,14 +46,14 @@ export function classifyFile(file) {
   const app = appForPath(file.path);
   const aiRelated = isAiRelated(file.path);
   const base = { app, aiRelated, category: categoryFor(file.path), typeLabel: '普通文件', risk: 'caution', riskLabel: riskLabels.caution, impact: '无法仅凭名称确认内容，请先打开查看，确认不再需要后再处理。', relation: '' };
-  const cache = hasAny(lower, ['/caches/', '/cache/', '/.cache/', 'cachestorage', 'gpucache', 'code cache', 'irrcache', 'deriveddata']);
+  const cache = /(^|\/)(caches?|\.cache|cachestorage|gpucache|code cache|irrcache|deriveddata)(\/|$)/.test(lower);
   if (lower.includes('irrcache')) return { ...base, typeLabel: '歌曲缓存', risk: 'safe', riskLabel: riskLabels.safe, impact: '主要是 QQ 音乐播放缓存，清理后重新播放可能需要联网缓冲，不等于删除独立保存的下载歌曲。' };
   if (cache && hasAny(lower, ['updater', 'shipit', 'update.zip', '/update.'])) return { ...base, typeLabel: '应用更新缓存', risk: 'safe', riskLabel: riskLabels.safe, impact: '通常是下载过的更新包，确认软件更新完成并退出后可清理，需要时可能重新下载。', relation: aiRelated ? '属于 AI 软件更新缓存，不是项目源码。' : '' };
   if (cache) return { ...base, typeLabel: aiRelated ? 'AI 软件缓存' : '应用缓存', risk: 'safe', riskLabel: riskLabels.safe, impact: '通常可以重建，清理后应用下次可能启动较慢或重新加载资源，请先退出对应应用。', relation: aiRelated ? '属于 AI 软件缓存，不是项目源码。' : '' };
-  if (hasAny(lower, ['/logs/', '/log/', '.tmp', '/temp/', '/tmp/'])) return { ...base, typeLabel: '日志或临时文件', risk: 'safe', riskLabel: riskLabels.safe, impact: '通常可清理，但日志会丢失历史诊断记录；请先退出对应应用。' };
-  if (hasAny(lower, ['/node_modules/', '/.venv/', '/venv/', '/site-packages/', '/.gradle/', '/.m2/'])) return { ...base, typeLabel: '项目依赖', impact: '删除后项目需要重新安装依赖才能运行，源码通常还在。', relation: '与项目运行直接相关，删除可能导致构建或 AI 功能暂时不可用。' };
-  if (['.gguf', '.safetensors', '.ckpt', '.pt', '.pth'].includes(ext) || hasAny(lower, ['/models/', '/checkpoints/'])) return { ...base, typeLabel: 'AI 模型', impact: '删除后依赖它的 AI 功能或项目无法运行，需要重新下载或恢复。', relation: '与 AI 项目直接相关，可能被多个项目共用。' };
-  if (lower.includes('/.git/')) return { ...base, typeLabel: 'Git 历史数据', risk: 'danger', riskLabel: riskLabels.danger, impact: '删除可能丢失提交历史、分支或版本信息。', relation: '与项目完整性直接相关。' };
+  if (/(^|\/)(logs?|temp|tmp)(\/|$)/.test(lower) || lower.includes('.tmp')) return { ...base, typeLabel: '日志或临时文件', risk: 'safe', riskLabel: riskLabels.safe, impact: '通常可清理，但日志会丢失历史诊断记录；请先退出对应应用。' };
+  if (/(^|\/)(node_modules|\.venv|venv|site-packages|\.gradle|\.m2)(\/|$)/.test(lower)) return { ...base, typeLabel: '项目依赖', impact: '删除后项目需要重新安装依赖才能运行，源码通常还在。', relation: '与项目运行直接相关，删除可能导致构建或 AI 功能暂时不可用。' };
+  if (['.gguf', '.safetensors', '.ckpt', '.pt', '.pth'].includes(ext) || /(^|\/)(models|checkpoints)(\/|$)/.test(lower)) return { ...base, typeLabel: 'AI 模型', impact: '删除后依赖它的 AI 功能或项目无法运行，需要重新下载或恢复。', relation: '与 AI 项目直接相关，可能被多个项目共用。' };
+  if (/(^|\/)\.git(\/|$)/.test(lower)) return { ...base, typeLabel: 'Git 历史数据', risk: 'danger', riskLabel: riskLabels.danger, impact: '删除可能丢失提交历史、分支或版本信息。', relation: '与项目完整性直接相关。' };
   if (['.db', '.sqlite', '.sqlite3'].includes(ext) || hasAny(lower, ['.db-wal', '.db-shm', 'leveldb'])) return { ...base, typeLabel: '应用数据库', risk: 'danger', riskLabel: riskLabels.danger, impact: '可能保存聊天记录、设置或应用数据，直接删除可能造成数据丢失或数据库损坏。' };
   if (hasAny(lower, ['/runtime/', '/plugins/', '/frameworks/', '/contents/resources/', '.asar', '.dylib', '.so', '.node'])) return { ...base, typeLabel: '程序运行组件', risk: 'danger', riskLabel: riskLabels.danger, impact: '删除可能导致应用或相关功能无法启动，通常需要重新安装。', relation: aiRelated ? '与 AI 软件运行有关，不是项目源码。' : '' };
   if (['.dmg', '.pkg', '.iso', '.appimage', '.exe', '.msi'].includes(ext)) return { ...base, typeLabel: '安装包或镜像', impact: '删除安装包通常不会卸载已安装的软件，但以后重装需要重新下载。' };
